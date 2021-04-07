@@ -1,5 +1,6 @@
 {
     "board": "blinklib:avr:blink",
     "output": "output",
-    "sketch": "blinks-mapping.ino"
+    "sketch": "blinks-mapping.ino",
+    "port": "/dev/ttyUSB0"
 }
