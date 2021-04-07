@@ -1,0 +1,6 @@
+[submodule "src/blinks-position"]
+	path = src/blinks-position
+	url = https://github.com/brunoga/blinks-position
+[submodule "src/blinks-orientation"]
+	path = src/blinks-orientation
+	url = https://github.com/brunoga/blinks-orientation
