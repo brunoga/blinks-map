@@ -1,0 +1,5 @@
+{
+    "board": "blinklib:avr:blink",
+    "output": "output",
+    "sketch": "blinks-mapping.ino"
+}
