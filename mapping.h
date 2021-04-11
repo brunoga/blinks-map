@@ -32,16 +32,17 @@ typedef bool (*PositionHandler)(int8_t x, int8_t y, byte* value);
 // highest_y - lowest_y < MAPPING_MAP_HEIGHT.
 void Set(int8_t x, int8_t y, byte value);
 
-// Returns the value at position x,y.
+// Returns the value at position x,y. Requests for positions that would fall
+// outside of the map return MAPPING_POSITION_EMPTY.
 byte Get(int8_t x, int8_t y);
 
-// Calls the given position_handler for every position in the map (or until
-// position_handler returns false). Returns true if it processed all positions
+// Calls the given position_handler for every position in the map or until
+// position_handler returns false. Returns true if it processed all positions
 // or false if it was terminated early.
 bool AllPositions(PositionHandler position_handler);
 
-// Returns true if the mapping has started (Set() was called at least once since
-// the last Reset() call or since the Blink started).
+// Returns true if the mapping has started (Set() was called at least once
+// since the last Reset() call or since the Blink started).
 bool Initialized();
 
 // Resets the map, making it empty.
