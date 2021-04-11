@@ -1,5 +1,5 @@
-#ifndef MAP_H_
-#define MAP_H_
+#ifndef MAPPING_H_
+#define MAPPING_H_
 
 #include <blinklib.h>
 
@@ -15,11 +15,11 @@
 //
 // Map size (width and height) can be set in the config/mapping_config.h file.
 
-// Map positions with this value mean not present (i.e. the position is not
+// Mapping positions with this value mean not present (i.e. the position is not
 // occupied by any Blink). Callers should not use this as a valid value.
-#define MAP_POSITION_EMPTY 0
+#define MAPPING_POSITION_EMPTY 0
 
-namespace map {
+namespace mapping {
 
 // Prototype for functions that want to process positions. The function must
 // return false whenever processing should stop earlier.
@@ -40,13 +40,13 @@ byte Get(int8_t x, int8_t y);
 // or false if it was terminated early.
 bool AllPositions(PositionHandler position_handler);
 
-// Returns true if the map was initialized (Set() was called at least once since
+// Returns true if the mapping has started (Set() was called at least once since
 // the last Reset() call or since the Blink started).
 bool Initialized();
 
 // Resets the map, making it empty.
 void Reset();
 
-}  // namespace map
+}  // namespace mapping
 
-#endif  // MAP_H_
+#endif  // MAPPING_H_

@@ -1,13 +1,15 @@
-#include "map.h"
+#include "mapping.h"
 
 #include <string.h>
 
-#if __has_include(<map_config.h>)
-#include <map_config.h>
+#if __has_include(<mapping_config.h>)
+#include <mapping_config.h>
 #endif
 
+namespace mapping {
+
 struct Map {
-  byte positions[MAP_HEIGHT][MAP_WIDTH];
+  byte positions[MAPPING_HEIGHT][MAPPING_WIDTH];
 
   int8_t min_x;
   int8_t min_y;
@@ -16,14 +18,12 @@ struct Map {
 };
 static Map map_;
 
-namespace map {
-
 // Clears the map from 0,0 to delta_x,delta_y.
 static void clear(byte delta_x, byte delta_y) {
-  for (byte y = 0; y < MAP_HEIGHT; y++) {
-    for (byte x = 0; x < MAP_WIDTH; x++) {
+  for (byte y = 0; y < MAPPING_HEIGHT; y++) {
+    for (byte x = 0; x < MAPPING_WIDTH; x++) {
       if (x < delta_x || y < delta_y) {
-        map_.positions[y][x] = MAP_POSITION_EMPTY;
+        map_.positions[y][x] = MAPPING_POSITION_EMPTY;
       }
     }
   }
@@ -33,8 +33,9 @@ static void clear(byte delta_x, byte delta_y) {
 // and delta_y are expected to always be nonnegative. This tries to keep all set
 // positions as close to 0,0 on the map as possible.
 static void move(byte delta_x, byte delta_y) {
-  memmove(&map_.positions[delta_y][delta_x], map_.positions,
-          MAP_WIDTH * MAP_HEIGHT - (delta_y * MAP_HEIGHT + delta_x));
+  memmove(
+      &map_.positions[delta_y][delta_x], map_.positions,
+      MAPPING_WIDTH * MAPPING_HEIGHT - (delta_y * MAPPING_HEIGHT + delta_x));
 
   clear(delta_x, delta_y);
 }
@@ -65,12 +66,17 @@ void Set(int8_t x, int8_t y, byte value) {
 }
 
 byte Get(int8_t x, int8_t y) {
+  if (x < map_.min_x || y < map_.min_y || x > MAPPING_WIDTH + map_.min_x ||
+      y > MAPPING_HEIGHT + map_.min_y) {
+    return MAPPING_POSITION_EMPTY;
+  }
+
   return map_.positions[y - map_.min_y][x - map_.min_x];
 }
 
 bool AllPositions(PositionHandler position_handler) {
-  for (byte y = 0; y < MAP_HEIGHT; y++) {
-    for (byte x = 0; x < MAP_WIDTH; x++) {
+  for (byte y = 0; y < MAPPING_HEIGHT; y++) {
+    for (byte x = 0; x < MAPPING_WIDTH; x++) {
       if (!position_handler(x + map_.min_x, y + map_.min_y,
                             &map_.positions[y][x])) {
         return false;
@@ -85,4 +91,4 @@ bool Initialized() { return map_.initialized; }
 
 void Reset() { memset(&map_, 0, sizeof(Map)); }
 
-}  // namespace map
+}  // namespace mapping
