@@ -19,9 +19,11 @@
 // occupied by any Blink). Callers should not use this as a valid value.
 #define MAP_POSITION_EMPTY 0
 
-namespace mapping {
-
 namespace map {
+
+// Prototype for functions that want to process positions. The function must
+// return false whenever processing should stop earlier.
+typedef bool (*PositionHandler)(int8_t x, int8_t y, byte* value);
 
 // Sets the given value at position x,y. Note that there is no bounds checking
 // (to save storage space) so you must make sure that x is in
@@ -33,11 +35,18 @@ void Set(int8_t x, int8_t y, byte value);
 // Returns the value at position x,y.
 byte Get(int8_t x, int8_t y);
 
+// Calls the given position_handler for every position in the map (or until
+// position_handler returns false). Returns true if it processed all positions
+// or false if it was terminated early.
+bool AllPositions(PositionHandler position_handler);
+
+// Returns true if the map was initialized (Set() was called at least once since
+// the last Reset() call or since the Blink started).
+bool Initialized();
+
 // Resets the map, making it empty.
 void Reset();
 
 }  // namespace map
-
-}  // namespace mapping
 
 #endif  // MAP_H_
