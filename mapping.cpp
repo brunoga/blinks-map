@@ -74,12 +74,32 @@ byte Get(int8_t x, int8_t y) {
   return map_.positions[y - map_.min_y][x - map_.min_x];
 }
 
-bool AllPositions(PositionHandler position_handler) {
+bool AllPositions(PositionHandler position_handler, void* context) {
   for (byte y = 0; y < MAPPING_HEIGHT; y++) {
     for (byte x = 0; x < MAPPING_WIDTH; x++) {
       if (!position_handler(x + map_.min_x, y + map_.min_y,
-                            &map_.positions[y][x])) {
+                            &map_.positions[y][x], context)) {
         return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool AllPositionsAround(int8_t x, int8_t y, byte distance,
+                        PositionHandler position_handler, void* context) {
+  int8_t z = -x - y;
+  for (int8_t y1 = y - distance; y1 <= y + distance; y1++) {
+    for (int8_t x1 = x - distance; x1 <= x + distance; x1++) {
+      int8_t z1 = -x1 - y1;
+      if (x1 != x && y1 != y && Get(x1, y1) != MAPPING_POSITION_EMPTY &&
+          abs(z - z1) <= distance) {
+        if (!position_handler(x1, y1,
+                              &map_.positions[y1 - map_.min_y][x1 - map_.min_x],
+                              context)) {
+          return false;
+        }
       }
     }
   }

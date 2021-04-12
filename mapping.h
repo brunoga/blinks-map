@@ -23,7 +23,7 @@ namespace mapping {
 
 // Prototype for functions that want to process positions. The function must
 // return false whenever processing should stop earlier.
-typedef bool (*PositionHandler)(int8_t x, int8_t y, byte* value);
+typedef bool (*PositionHandler)(int8_t x, int8_t y, byte* value, void* context);
 
 // Sets the given value at position x,y. Note that there is no bounds checking
 // (to save storage space) so you must make sure that x is in
@@ -38,8 +38,13 @@ byte Get(int8_t x, int8_t y);
 
 // Calls the given position_handler for every position in the map or until
 // position_handler returns false. Returns true if it processed all positions
-// or false if it was terminated early.
-bool AllPositions(PositionHandler position_handler);
+// or false if it was terminated early. Whatever is passed as context here will
+// ne forwarded to the position_handler and can be used for both input and
+// output data.
+bool AllPositions(PositionHandler position_handler, void* context);
+
+bool AllPositionsAround(int8_t x, int8_t y, byte distance,
+                        PositionHandler position_handler, void* context);
 
 // Returns true if the mapping has started (Set() was called at least once
 // since the last Reset() call or since the Blink started).
