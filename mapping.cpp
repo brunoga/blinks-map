@@ -42,8 +42,8 @@ static void move(byte delta_x, byte delta_y) {
   clear(delta_x, delta_y);
 }
 
-static byte next_valid_position(byte distance, Iterator* iterator, int8_t* x,
-                                int8_t* y) {
+static byte __attribute__((noinline))
+next_valid_position(byte distance, Iterator* iterator, int8_t* x, int8_t* y) {
   for (; iterator->curr_y <= iterator->end_y; iterator->curr_y++) {
     for (; iterator->curr_x <= iterator->end_x; iterator->curr_x++) {
       if (distance != 0) {
@@ -73,6 +73,21 @@ static byte next_valid_position(byte distance, Iterator* iterator, int8_t* x,
   iterator->curr_y = iterator->start_y;
 
   return MAPPING_POSITION_EMPTY;
+}
+
+static void maybe_initialize_iterator(int8_t start_x, int8_t start_y,
+                                      int8_t end_x, int8_t end_y,
+                                      Iterator* iterator) {
+  if (iterator->initialized) return;
+
+  iterator->start_x = start_x;
+  iterator->start_y = start_y;
+  iterator->curr_x = start_x;
+  iterator->curr_y = start_y;
+  iterator->end_x = end_x;
+  iterator->end_y = end_y;
+
+  iterator->initialized = true;
 }
 
 void Set(int8_t x, int8_t y, byte value) {
@@ -110,32 +125,16 @@ byte Get(int8_t x, int8_t y) {
 }
 
 byte GetNextValidPosition(Iterator* iterator, int8_t* x, int8_t* y) {
-  if (!iterator->initialized) {
-    iterator->start_x = map_.min_x;
-    iterator->start_y = map_.min_y;
-    iterator->curr_x = iterator->start_x;
-    iterator->curr_y = iterator->start_y;
-    iterator->end_x = MAPPING_WIDTH + map_.min_x;
-    iterator->end_y = MAPPING_HEIGHT + map_.min_y;
-
-    iterator->initialized = true;
-  }
+  maybe_initialize_iterator(map_.min_x, map_.min_y, MAPPING_WIDTH + map_.min_x,
+                            MAPPING_HEIGHT + map_.min_y, iterator);
 
   return next_valid_position(0, iterator, x, y);
 }
 
 byte GetNextValidPositionAround(int8_t x0, int8_t y0, byte distance,
                                 Iterator* iterator, int8_t* x, int8_t* y) {
-  if (!iterator->initialized) {
-    iterator->start_x = x0 - distance;
-    iterator->start_y = y0 - distance;
-    iterator->curr_x = iterator->start_x;
-    iterator->curr_y = iterator->start_y;
-    iterator->end_x = x0 + distance;
-    iterator->end_y = y0 + distance;
-
-    iterator->initialized = true;
-  }
+  maybe_initialize_iterator(x0 - distance, y0 - distance, x0 + distance,
+                            y0 + distance, iterator);
 
   return next_valid_position(distance, iterator, x, y);
 }
