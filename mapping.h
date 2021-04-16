@@ -34,10 +34,6 @@ struct Iterator {
   bool initialized;
 };
 
-// Prototype for functions that want to process positions. The function must
-// return false whenever processing should stop earlier.
-typedef bool (*PositionHandler)(int8_t x, int8_t y, byte* value, void* context);
-
 // Sets the given value at position x,y. Note that there is no bounds checking
 // (to save storage space) so you must make sure that x is in
 // [-MAPPING_MAP_WIDTH, MAPPING_MAP_WIDTH) and y is in [-MAPPING_MAP_HEIGHT,
