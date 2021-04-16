@@ -6,6 +6,8 @@
 #include <mapping_config.h>
 #endif
 
+#define ABS(x) ((x) > 0 ? (x) : -(x))
+
 namespace mapping {
 
 struct Map {
@@ -40,6 +42,39 @@ static void move(byte delta_x, byte delta_y) {
   clear(delta_x, delta_y);
 }
 
+static byte next_valid_position(byte distance, Iterator* iterator, int8_t* x,
+                                int8_t* y) {
+  for (; iterator->curr_y <= iterator->end_y; iterator->curr_y++) {
+    for (; iterator->curr_x <= iterator->end_x; iterator->curr_x++) {
+      if (distance != 0) {
+        int8_t start_z = -iterator->start_x - iterator->start_y;
+        int8_t curr_z = -iterator->curr_x - iterator->curr_y;
+        int8_t delta_z = ABS(curr_z - start_z);
+
+        if (delta_z > distance) continue;
+      }
+
+      if (byte value = Get(iterator->curr_x, iterator->curr_y) !=
+                       MAPPING_POSITION_EMPTY) {
+        *x = iterator->curr_x;
+        *y = iterator->curr_y;
+
+        // Increment iterator so we start at the next position on the following
+        // iteration.
+        iterator->curr_x++;
+
+        return value;
+      };
+    }
+
+    iterator->curr_x - iterator->start_x;
+  }
+
+  iterator->curr_y = iterator->start_y;
+
+  return MAPPING_POSITION_EMPTY;
+}
+
 void Set(int8_t x, int8_t y, byte value) {
   if (map_.initialized) {
     byte delta_x = 0;
@@ -66,45 +101,43 @@ void Set(int8_t x, int8_t y, byte value) {
 }
 
 byte Get(int8_t x, int8_t y) {
-  if (x < map_.min_x || y < map_.min_y || x > MAPPING_WIDTH + map_.min_x ||
-      y > MAPPING_HEIGHT + map_.min_y) {
+  if (x < map_.min_x || y < map_.min_y || x >= MAPPING_WIDTH + map_.min_x ||
+      y >= MAPPING_HEIGHT + map_.min_y) {
     return MAPPING_POSITION_EMPTY;
   }
 
   return map_.positions[y - map_.min_y][x - map_.min_x];
 }
 
-bool AllPositions(PositionHandler position_handler, void* context) {
-  for (byte y = 0; y < MAPPING_HEIGHT; y++) {
-    for (byte x = 0; x < MAPPING_WIDTH; x++) {
-      if (!position_handler(x + map_.min_x, y + map_.min_y,
-                            &map_.positions[y][x], context)) {
-        return false;
-      }
-    }
+byte GetNextValidPosition(Iterator* iterator, int8_t* x, int8_t* y) {
+  if (!iterator->initialized) {
+    iterator->start_x = map_.min_x;
+    iterator->start_y = map_.min_y;
+    iterator->curr_x = iterator->start_x;
+    iterator->curr_y = iterator->start_y;
+    iterator->end_x = MAPPING_WIDTH + map_.min_x;
+    iterator->end_y = MAPPING_HEIGHT + map_.min_y;
+
+    iterator->initialized = true;
   }
 
-  return true;
+  return next_valid_position(0, iterator, x, y);
 }
 
-bool AllPositionsAround(int8_t x, int8_t y, byte distance,
-                        PositionHandler position_handler, void* context) {
-  int8_t z = -x - y;
-  for (int8_t y1 = y - distance; y1 <= y + distance; y1++) {
-    for (int8_t x1 = x - distance; x1 <= x + distance; x1++) {
-      int8_t z1 = -x1 - y1;
-      if (x1 != x && y1 != y && Get(x1, y1) != MAPPING_POSITION_EMPTY &&
-          abs(z - z1) <= distance) {
-        if (!position_handler(x1, y1,
-                              &map_.positions[y1 - map_.min_y][x1 - map_.min_x],
-                              context)) {
-          return false;
-        }
-      }
-    }
+byte GetNextValidPositionAround(int8_t x0, int8_t y0, byte distance,
+                                Iterator* iterator, int8_t* x, int8_t* y) {
+  if (!iterator->initialized) {
+    iterator->start_x = x0 - distance;
+    iterator->start_y = y0 - distance;
+    iterator->curr_x = iterator->start_x;
+    iterator->curr_y = iterator->start_y;
+    iterator->end_x = x0 + distance;
+    iterator->end_y = y0 + distance;
+
+    iterator->initialized = true;
   }
 
-  return true;
+  return next_valid_position(distance, iterator, x, y);
 }
 
 bool Initialized() { return map_.initialized; }

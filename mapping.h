@@ -21,6 +21,19 @@
 
 namespace mapping {
 
+struct Iterator {
+  int8_t start_x;
+  int8_t start_y;
+
+  int8_t curr_x;
+  int8_t curr_y;
+
+  int8_t end_x;
+  int8_t end_y;
+
+  bool initialized;
+};
+
 // Prototype for functions that want to process positions. The function must
 // return false whenever processing should stop earlier.
 typedef bool (*PositionHandler)(int8_t x, int8_t y, byte* value, void* context);
@@ -36,15 +49,20 @@ void Set(int8_t x, int8_t y, byte value);
 // outside of the map return MAPPING_POSITION_EMPTY.
 byte Get(int8_t x, int8_t y);
 
-// Calls the given position_handler for every position in the map or until
-// position_handler returns false. Returns true if it processed all positions
-// or false if it was terminated early. Whatever is passed as context here will
-// ne forwarded to the position_handler and can be used for both input and
-// output data.
-bool AllPositions(PositionHandler position_handler, void* context);
+// Returns the value of the next valid (occupied) position. The given iterator
+// is updated with the position returned so a following call using the same
+// iterator continues from the last returned valid position. The x and y
+// parameter will contain the coordinates for the returned value if it is a
+// valid one. Returns MAPPING_POSITION_EMPTY if no valid position is found (x
+// and y are invalid in this case).
+byte GetNextValidPosition(Iterator* iterator, int8_t* x, int8_t* y);
 
-bool AllPositionsAround(int8_t x, int8_t y, byte distance,
-                        PositionHandler position_handler, void* context);
+// Same as above, but returns valid positions at a distance equal to or smaller
+// than from the given x0 and y0 coordinates. Note that although we are dealing
+// only with x and y coordinates, we are actually mapping an hexagonal grid so
+// there will be 6 neighbors for each position, not 4.
+byte GetNextValidPositionAround(int8_t x0, int8_t y0, byte distance,
+                                Iterator* iterator, int8_t* x, int8_t* y);
 
 // Returns true if the mapping has started (Set() was called at least once
 // since the last Reset() call or since the Blink started).
