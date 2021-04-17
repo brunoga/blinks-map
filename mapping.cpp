@@ -42,9 +42,8 @@ static void move(byte delta_x, byte delta_y) {
   clear(delta_x, delta_y);
 }
 
-static byte __attribute__((noinline))
-next_valid_position(byte x0, byte y0, byte distance, Iterator* iterator,
-                    int8_t* x, int8_t* y) {
+static byte next_valid_position(byte x0, byte y0, byte distance,
+                                Iterator* iterator, int8_t* x, int8_t* y) {
   for (; iterator->curr_y <= iterator->end_y; iterator->curr_y++) {
     for (; iterator->curr_x <= iterator->end_x; iterator->curr_x++) {
       if (distance != 0) {
