@@ -22,16 +22,16 @@
 namespace mapping {
 
 struct Iterator {
-  int8_t start_x;
-  int8_t start_y;
+  int8_t start_x = 0;
+  int8_t start_y = 0;
 
-  int8_t curr_x;
-  int8_t curr_y;
+  int8_t curr_x = 0;
+  int8_t curr_y = 0;
 
-  int8_t end_x;
-  int8_t end_y;
+  int8_t end_x = 0;
+  int8_t end_y = 0;
 
-  bool initialized;
+  bool initialized = false;
 };
 
 // Sets the given value at position x,y. Note that there is no bounds checking
