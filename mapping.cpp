@@ -43,19 +43,19 @@ static void move(byte delta_x, byte delta_y) {
 }
 
 static byte __attribute__((noinline))
-next_valid_position(byte distance, Iterator* iterator, int8_t* x, int8_t* y) {
+next_valid_position(byte x0, byte y0, byte distance, Iterator* iterator,
+                    int8_t* x, int8_t* y) {
   for (; iterator->curr_y <= iterator->end_y; iterator->curr_y++) {
     for (; iterator->curr_x <= iterator->end_x; iterator->curr_x++) {
       if (distance != 0) {
-        int8_t start_z = -iterator->start_x - iterator->start_y;
-        int8_t curr_z = -iterator->curr_x - iterator->curr_y;
-        int8_t delta_z = ABS(curr_z - start_z);
+        int8_t origin_z = -x0 - y0;
+        int8_t dest_z = -iterator->curr_x - iterator->curr_y;
+        int8_t delta_z = ABS(dest_z - origin_z);
 
         if (delta_z > distance) continue;
       }
 
-      if (byte value = Get(iterator->curr_x, iterator->curr_y) !=
-                       MAPPING_POSITION_EMPTY) {
+      if (byte value = Get(iterator->curr_x, iterator->curr_y)) {
         *x = iterator->curr_x;
         *y = iterator->curr_y;
 
@@ -67,7 +67,7 @@ next_valid_position(byte distance, Iterator* iterator, int8_t* x, int8_t* y) {
       };
     }
 
-    iterator->curr_x - iterator->start_x;
+    iterator->curr_x = iterator->start_x;
   }
 
   iterator->curr_y = iterator->start_y;
@@ -128,7 +128,7 @@ byte GetNextValidPosition(Iterator* iterator, int8_t* x, int8_t* y) {
   maybe_initialize_iterator(map_.min_x, map_.min_y, MAPPING_WIDTH + map_.min_x,
                             MAPPING_HEIGHT + map_.min_y, iterator);
 
-  return next_valid_position(0, iterator, x, y);
+  return next_valid_position(0, 0, 0, iterator, x, y);
 }
 
 byte GetNextValidPositionAround(int8_t x0, int8_t y0, byte distance,
@@ -136,7 +136,7 @@ byte GetNextValidPositionAround(int8_t x0, int8_t y0, byte distance,
   maybe_initialize_iterator(x0 - distance, y0 - distance, x0 + distance,
                             y0 + distance, iterator);
 
-  return next_valid_position(distance, iterator, x, y);
+  return next_valid_position(x0, y0, distance, iterator, x, y);
 }
 
 bool Initialized() { return map_.initialized; }
