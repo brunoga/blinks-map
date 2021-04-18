@@ -53,7 +53,7 @@ void Set(int8_t x, int8_t y, byte value) {
       map_.min_x = x;
     }
 
-    if (map_.max_x < x) map_.max_x = x;
+    if (x > map_.max_x) map_.max_x = x;
 
     byte delta_y = 0;
     if (y < map_.min_y) {
@@ -61,7 +61,7 @@ void Set(int8_t x, int8_t y, byte value) {
       map_.min_y = y;
     }
 
-    if (map_.max_y < y) map_.max_y = y;
+    if (y > map_.max_y) map_.max_y = y;
 
     move(delta_x, delta_y);
   } else {
@@ -77,12 +77,11 @@ void Set(int8_t x, int8_t y, byte value) {
 }
 
 byte Get(int8_t x, int8_t y) {
-  if (x < map_.min_x || y < map_.min_y || x >= MAPPING_WIDTH + map_.min_x ||
-      y >= MAPPING_HEIGHT + map_.min_y) {
+  if (x < map_.min_x || y < map_.min_y || x > map_.max_x || y > map_.max_y) {
     return MAPPING_POSITION_EMPTY;
   }
 
-  return &map_.positions[y - map_.min_y][x - map_.min_x];
+  return map_.positions[y - map_.min_y][x - map_.min_x];
 }
 
 static bool bounding_box_valid_positions(int8_t z0, byte distance,
@@ -94,7 +93,7 @@ static bool bounding_box_valid_positions(int8_t z0, byte distance,
     for (int8_t x = start_x; x <= end_x; x++) {
       if (Get(x, y) == MAPPING_POSITION_EMPTY) continue;
 
-      if (distance && ABS(-x - y - z0) > distance) continue;
+      if (distance && (ABS(-x - y - z0) > distance)) continue;
 
       // At this point we know that the coordinates are valid and fall inside
       // the map, so we can index directly into the map positions and return a
