@@ -121,6 +121,6 @@ bool AllValidPositionsAround(int8_t x0, int8_t y0, byte distance,
 
 bool Initialized() { return map_.initialized; }
 
-void Reset() { memset(&map_, 0, sizeof(Map)); }
+void __attribute__((noinline)) Reset() { memset(&map_, 0, sizeof(Map)); }
 
 }  // namespace mapping
