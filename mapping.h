@@ -21,18 +21,7 @@
 
 namespace mapping {
 
-struct Iterator {
-  int8_t start_x;
-  int8_t start_y;
-
-  int8_t curr_x;
-  int8_t curr_y;
-
-  int8_t end_x;
-  int8_t end_y;
-
-  bool initialized = false;
-};
+typedef bool (*PositionHandler)(int8_t x, int8_t y, byte* value, void* context);
 
 // Sets the given value at position x,y. Note that there is no bounds checking
 // (to save storage space) so you must make sure that x is in
@@ -45,20 +34,14 @@ void Set(int8_t x, int8_t y, byte value);
 // outside of the map return MAPPING_POSITION_EMPTY.
 byte Get(int8_t x, int8_t y);
 
-// Returns the value of the next valid (occupied) position. The given iterator
-// is updated with the position returned so a following call using the same
-// iterator continues from the last returned valid position. The x and y
-// parameter will contain the coordinates for the returned value if it is a
-// valid one. Returns MAPPING_POSITION_EMPTY if no valid position is found (x
-// and y are invalid in this case).
-byte GetNextValidPosition(Iterator* iterator, int8_t* x, int8_t* y);
+// Calls the given position_handler for every valid (set) position in the map.
+bool AllValidPositions(PositionHandler position_handler, void* context);
 
-// Same as above, but returns valid positions at a distance equal to or smaller
-// than from the given x0 and y0 coordinates. Note that although we are dealing
-// only with x and y coordinates, we are actually mapping an hexagonal grid so
-// there will be 6 neighbors for each position, not 4.
-byte GetNextValidPositionAround(int8_t x0, int8_t y0, byte distance,
-                                Iterator* iterator, int8_t* x, int8_t* y);
+// Calls the given position_handler for every valid (set) position that is at
+// most at the given distance from the x0,y0 coordinates. We are dealing with
+// hexagons so there are 6 neighbors at distance 1.
+bool AllValidPositionsAround(int8_t x0, int8_t y0, byte distance,
+                             PositionHandler position_handler, void* context);
 
 // Returns true if the mapping has started (Set() was called at least once
 // since the last Reset() call or since the Blink started).

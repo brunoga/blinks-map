@@ -16,6 +16,9 @@ struct Map {
   int8_t min_x;
   int8_t min_y;
 
+  int8_t max_x;
+  int8_t max_y;
+
   bool initialized;
 };
 static Map map_;
@@ -42,53 +45,6 @@ static void move(byte delta_x, byte delta_y) {
   clear(delta_x, delta_y);
 }
 
-static byte next_valid_position(byte x0, byte y0, byte distance,
-                                Iterator* iterator, int8_t* x, int8_t* y) {
-  for (; iterator->curr_y <= iterator->end_y; iterator->curr_y++) {
-    for (; iterator->curr_x <= iterator->end_x; iterator->curr_x++) {
-      if (distance != 0) {
-        int8_t origin_z = -x0 - y0;
-        int8_t dest_z = -iterator->curr_x - iterator->curr_y;
-        int8_t delta_z = ABS(dest_z - origin_z);
-
-        if (delta_z > distance) continue;
-      }
-
-      if (byte value = Get(iterator->curr_x, iterator->curr_y)) {
-        *x = iterator->curr_x;
-        *y = iterator->curr_y;
-
-        // Increment iterator so we start at the next position on the following
-        // iteration.
-        iterator->curr_x++;
-
-        return value;
-      };
-    }
-
-    iterator->curr_x = iterator->start_x;
-  }
-
-  iterator->curr_y = iterator->start_y;
-
-  return MAPPING_POSITION_EMPTY;
-}
-
-static void maybe_initialize_iterator(int8_t start_x, int8_t start_y,
-                                      int8_t end_x, int8_t end_y,
-                                      Iterator* iterator) {
-  if (iterator->initialized) return;
-
-  iterator->start_x = start_x;
-  iterator->start_y = start_y;
-  iterator->curr_x = start_x;
-  iterator->curr_y = start_y;
-  iterator->end_x = end_x;
-  iterator->end_y = end_y;
-
-  iterator->initialized = true;
-}
-
 void Set(int8_t x, int8_t y, byte value) {
   if (map_.initialized) {
     byte delta_x = 0;
@@ -97,16 +53,22 @@ void Set(int8_t x, int8_t y, byte value) {
       map_.min_x = x;
     }
 
+    if (map_.max_x < x) map_.max_x = x;
+
     byte delta_y = 0;
     if (y < map_.min_y) {
       delta_y = map_.min_y - y;
       map_.min_y = y;
     }
 
+    if (map_.max_y < y) map_.max_y = y;
+
     move(delta_x, delta_y);
   } else {
     map_.min_x = x;
     map_.min_y = y;
+    map_.max_x = x;
+    map_.max_y = y;
   }
 
   map_.positions[y - map_.min_y][x - map_.min_x] = value;
@@ -120,22 +82,42 @@ byte Get(int8_t x, int8_t y) {
     return MAPPING_POSITION_EMPTY;
   }
 
-  return map_.positions[y - map_.min_y][x - map_.min_x];
+  return &map_.positions[y - map_.min_y][x - map_.min_x];
 }
 
-byte GetNextValidPosition(Iterator* iterator, int8_t* x, int8_t* y) {
-  maybe_initialize_iterator(map_.min_x, map_.min_y, MAPPING_WIDTH + map_.min_x,
-                            MAPPING_HEIGHT + map_.min_y, iterator);
+static bool bounding_box_valid_positions(int8_t z0, byte distance,
+                                         int8_t start_x, int8_t start_y,
+                                         int8_t end_x, int8_t end_y,
+                                         PositionHandler position_handler,
+                                         void* context) {
+  for (int8_t y = start_y; y <= end_y; y++) {
+    for (int8_t x = start_x; x <= end_x; x++) {
+      if (Get(x, y) == MAPPING_POSITION_EMPTY) continue;
 
-  return next_valid_position(0, 0, 0, iterator, x, y);
+      if (distance && ABS(-x - y - z0) > distance) continue;
+
+      // At this point we know that the coordinates are valid and fall inside
+      // the map, so we can index directly into the map positions and return a
+      // pointer to it.
+      if (!position_handler(
+              x, y, &map_.positions[y - map_.min_y][x - map_.min_x], context))
+        return false;
+    }
+  }
+
+  return true;
 }
 
-byte GetNextValidPositionAround(int8_t x0, int8_t y0, byte distance,
-                                Iterator* iterator, int8_t* x, int8_t* y) {
-  maybe_initialize_iterator(x0 - distance, y0 - distance, x0 + distance,
-                            y0 + distance, iterator);
+bool AllValidPositions(PositionHandler position_handler, void* context) {
+  return bounding_box_valid_positions(0, 0, map_.min_x, map_.min_y, map_.max_x,
+                                      map_.max_y, position_handler, context);
+}
 
-  return next_valid_position(x0, y0, distance, iterator, x, y);
+bool AllValidPositionsAround(int8_t x0, int8_t y0, byte distance,
+                             PositionHandler position_handler, void* context) {
+  return bounding_box_valid_positions(-x0 - y0, distance, x0 - distance,
+                                      y0 - distance, x0 + distance,
+                                      y0 + distance, position_handler, context);
 }
 
 bool Initialized() { return map_.initialized; }
